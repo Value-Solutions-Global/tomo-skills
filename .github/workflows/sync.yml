@@ -1,0 +1,27 @@
+# Copies the tomo skill from Tomo's production api, the one copy that is checked against the MCP's tools.
+name: sync
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the skill
+        run: |
+          code=$(curl -sS -o /tmp/SKILL.md -w '%{http_code}' https://api.tomoapp.co.il/.well-known/agent-skills/tomo/SKILL.md)
+          if [ "$code" = 404 ]; then echo "::notice::Not served yet"; exit 0; fi
+          [ "$code" = 200 ] || { echo "::error::api answered $code"; exit 1; }
+          head -2 /tmp/SKILL.md | grep -qx 'name: tomo' || { echo "::error::not the tomo skill"; exit 1; }
+          cp /tmp/SKILL.md skills/tomo/SKILL.md
+      - name: Commit when changed
+        run: |
+          git diff --quiet && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "Sync the tomo skill $(sed -n 's/^  version: "\(.*\)"$/\1/p' skills/tomo/SKILL.md)"
+          git push
