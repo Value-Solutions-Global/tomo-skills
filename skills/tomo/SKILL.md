@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into main and made Live with promote. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.04"
+  version: "2026.11.04.2"
 ---
 
 # Tomo
@@ -66,4 +66,4 @@ The Tomo team may answer with questions. Hold the conversation: `support get` wi
 
 ## Keeping this file current
 
-`status` names the current version of this skill. When it is newer than the version at the top of this file, tell the user once to update it with `npx skills update`, or install it again with `npx skills add https://api.tomoapp.co.il`.
+`status` names the current version of this skill. When it is newer than the version at the top of this file, tell the user once to update it with `npx skills update`, or install it again with `npx skills add Value-Solutions-Global/tomo-skills` (https://github.com/Value-Solutions-Global/tomo-skills).
