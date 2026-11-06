@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into main and made Live with promote. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.04.2"
+  version: "2026.11.06.1"
 ---
 
 # Tomo
@@ -39,7 +39,7 @@ Versions work like git. You edit a draft (the default is "draft"). `merge_draft`
 3. Read before you write: `get_schema` for the kind of file (never guess a field), `list_files`, `read_file` (line numbers and the hash every write takes).
 4. Edit small: `edit_file` (old text matching once), `edit_files` for several at once, `write_file` only for a new file. A changed draft refuses the write naming the files: read them again and redo it.
 5. `validate` after every batch of edits, and fix what it names.
-6. Check, cheapest first: `rerun_block` (the failed step's recorded input on your draft), `step_tests run` (`step_tests add_from_run` keeps a failed step as a case), `send_test_message` (a whole chat on the draft; pass the contactId back to continue), `run_tests` with a scenario file or a suite, then `get_test_report`. Wait for a run with `test_runs get`; never guess its result.
+6. Check, cheapest first: `rerun_block` (the failed step's recorded input on your draft), `step_tests run` (`step_tests add_from_run` keeps a failed step as a case), `send_test_message` (a whole chat on the draft; pass the contactId back to continue), `run_tests` with a scenario file or a suite, then `get_test_report`. Wait for a run with `test_runs get`; never guess its result. A journey test stops at its last step, so a follow up still waiting never runs: to see follow ups, end the scenario with a wait step as long as you want to watch.
 7. `feedback mark` handled only for what your change fixed and a check confirmed. Tell the user what changed and what is still open.
 8. Going Live, only when the user asks: `diff`, then `merge_draft`, then `promote` (its dryRun first shows who moves).
 
