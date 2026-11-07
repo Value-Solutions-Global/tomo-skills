@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into main and made Live with promote. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.06.1"
+  version: "2026.11.07.10"
 ---
 
 # Tomo
@@ -25,7 +25,7 @@ Restart the agent afterwards.
 One journey per workspace: the stages a customer moves through and everything that answers them, versioned as one.
 
 - "journey.yaml": the stages (open, won, lost) and the entry stage. "stages/<id>.md": a stage's context.
-- "flows/index.yaml" and "flows/<name>.yaml": triggers and steps; a flow runs only in the stages it names.
+- "flows/index.yaml" and "flows/<name>.yaml": triggers and steps; a flow runs only in the stages it names. A flow file is one business process, about 20 steps; a bigger flow is a folder, "flows/<name>/", its steps in several files.
 - "agents/<name>.md": settings, then instructions. Agents hand over to each other and move people between stages.
 - "actions/<name>.md", "mcp/<server>.yaml", "skills/<name>/SKILL.md", "files/<name>.md": calls out, outside tools, steps loaded when needed, knowledge.
 - "tests/scenarios/<name>.yaml", "tests/suites.yaml": the journey's tests. "migrations/<name>.yaml": who moves when stages change.
@@ -36,14 +36,17 @@ Versions work like git. You edit a draft (the default is "draft"). `merge_draft`
 
 1. `status`: the team's instructions (follow them), open feedback, failed runs, who pays, the next step. Then `get_journey`: stages, flows, agents, files, drafts.
 2. Find what to fix, cheapest signal first: `feedback list` (each item names its run and step), then `error_summary`, `list_runs`, `get_run`, `get_block_run`.
-3. Read before you write: `get_schema` for the kind of file (never guess a field), `list_files`, `read_file` (line numbers and the hash every write takes).
-4. Edit small: `edit_file` (old text matching once), `edit_files` for several at once, `write_file` only for a new file. A changed draft refuses the write naming the files: read them again and redo it.
-5. `validate` after every batch of edits, and fix what it names.
-6. Check, cheapest first: `rerun_block` (the failed step's recorded input on your draft), `step_tests run` (`step_tests add_from_run` keeps a failed step as a case), `send_test_message` (a whole chat on the draft; pass the contactId back to continue), `run_tests` with a scenario file or a suite, then `get_test_report`. Wait for a run with `test_runs get`; never guess its result. A journey test stops at its last step, so a follow up still waiting never runs: to see follow ups, end the scenario with a wait step as long as you want to watch.
+3. Read before you write: `get_schema` for the kind of file (never guess a field), `list_files`, `search_files` to find where something is, `read_file` (line numbers and the hash every write takes; with step, only that step). `search_files` meaning: true finds a thing said in other words.
+4. Edit small. Inside a flow, change steps with `edit_steps` (set, add, remove, connect, rename, move, in one batch), never a text edit of a step's structure; its move op puts steps in another file of the flow's folder when a file grows past about 20 steps. Other files: `edit_file` (old text matching once), `edit_files` for several at once, `write_file` only for a new file. The same name, price or link in any file, flows included: `replace_all`, dryRun first; structure (ids, keys, connections) stays with `edit_steps`. A write is refused only when a file it touches changed since your hash, naming those files: read them again and redo it; other files changed meanwhile are kept. Before changing a field, step or agent, `references` shows every use; `rename_field` renames a field in the journey's files; definitions, forms, campaigns, dashboards and stored data keep the old key, and the answer names them. A bad batch of edits: `drafts saves`, then `drafts restore` to the hash before it. Rewrite many files the same way (a tone, a gender, a language): `rewrite_files` with an instruction, `dryRun` first, then the same tool with apply: <its job id> (no new calls); it is paid.
+5. `validate` after every batch of edits, and fix what it names. After an `edit_steps` move, validate and move again until no file is over 100 steps.
+6. Check, cheapest first: `rerun_block` (the failed step's recorded input on your draft), `step_tests run` (`step_tests add_from_run` keeps a failed step as a case), `send_test_message` (a whole chat on the draft; pass the contactId back to continue), `run_tests` with a scenario file or a suite, then `get_test_report`. Wait for a run with `test_runs get`; never guess its result. A journey test stops at its last step, so a follow up still waiting never runs: to see follow ups, end the scenario with a wait step as long as you want to watch. After a prompt change, run the suite and `test_runs compare` the two runs: what newly fails, what newly passes, each check and the cost.
 7. `feedback mark` handled only for what your change fixed and a check confirmed. Tell the user what changed and what is still open.
 8. Going Live, only when the user asks: `diff`, then `merge_draft`, then `promote` (its dryRun first shows who moves).
 
 Where a fix belongs: how an agent behaves goes in its instructions; facts about the business in knowledge ("files/" or `knowledge add_to_draft`; an upload teaches nothing until then); routing, waiting, timers and sends in a flow; another system in an action or an MCP server. Ways to build the AI (one agent, a router, hand overs, stages and more): `get_schema` with kind guide.
+
+Shared pieces, both optional: prompt text that agents, skills or stages repeat can live once in `prompts/<name>.md`, placed with a line `{{include prompts/<name>.md}}` exactly where you want it.
+Steps that flows repeat can live in a flow of their own that a call step ({type: call}) runs; validate's DUPLICATE_TEXT and DUPLICATE_STEPS point at copies for information only.
 
 ## Rules
 
