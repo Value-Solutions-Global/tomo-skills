@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into main and made Live with promote. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.11.3"
+  version: "2026.11.12.1"
 ---
 
 # Tomo
@@ -52,7 +52,7 @@ Making this journey behave like another organization's, whole or in one part, in
 7. `feedback mark` handled only for what your change fixed and a check confirmed. Tell the user what changed and what is still open.
 8. Going Live, only when the user asks: `diff`, then `merge_draft`, then `promote` (its dryRun first shows who moves).
 
-Where a fix belongs: how an agent behaves goes in its instructions; facts about the business in knowledge ("files/" or `knowledge add_to_draft`; an upload teaches nothing until then); routing, waiting, timers and sends in a flow; another system in an action or an MCP server. Ways to build the AI (one agent, a router, hand overs, stages and more): `get_schema` with kind guide.
+Where a fix belongs: how an agent behaves goes in its instructions; facts about the business in knowledge ("files/" or `knowledge add_to_draft`; an upload teaches nothing until then); routing, waiting, timers and sends in a flow; another system in an action or an MCP server. Ways to build the AI (one agent, a router, hand overs, stages and more): `get_schema` with kind guide. A lock that keeps the agents quiet (a field or stage the flow sets: an age check, a block) needs a way out the team can use: start tasks past it with the task trigger, and clear it on a handoff trigger with event handed_back (`get_schema` with kind flow). Otherwise a teammate's task stops at the lock, and its note says not done.
 
 Shared pieces, both optional: prompt text that agents, skills or stages repeat can live once in `prompts/<name>.md`, placed with a line `{{include prompts/<name>.md}}` exactly where you want it.
 Steps that flows repeat can live in a flow of their own that a call step ({type: call}) runs; validate's DUPLICATE_TEXT and DUPLICATE_STEPS point at copies for information only.
