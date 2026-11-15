@@ -1,8 +1,8 @@
 ---
 name: tomo
-description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into develop, promoted to staging and then Live. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
+description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into develop or staging, and promoted to Live. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.15.2"
+  version: "2026.11.15.4"
 ---
 
 # Tomo
@@ -30,16 +30,16 @@ One journey per workspace: the stages a customer moves through and everything th
 - "actions/<name>.md", "mcp/<server>.yaml", "skills/<name>/SKILL.md", "files/<name>.md": calls out, outside tools, steps loaded when needed, knowledge.
 - "tests/scenarios/<name>.yaml", "tests/suites.yaml": the journey's tests. "migrations/<name>.yaml": who moves when stages change.
 
-Versions work like git, on four levels: drafts, develop, staging, Live.
+Versions work like git branches, on four levels: drafts, develop, staging, Live. The levels are optional: each holds its own version, and work moves from any of them into any level.
 
-- Drafts: each worker's own work (the default is "draft"). A new draft starts from develop.
-- Develop: `merge_draft` takes a draft there. It may break; the owner may test it.
-- Staging: `promote` with to: "staging" moves develop there. The solid candidate the owner tests before customers get it. Tests read staging unless you name the draft (draft: "develop" tests develop). "main" is staging's old name.
-- Live: `promote` makes staging Live, what customers get. When develop has work staging lacks, promote says it stayed behind. Promoting to Live may need an admin's approval; then the answer names the request.
+- Drafts: each worker's own work (the default is "draft"). A new draft starts from develop; `drafts create` from staging or live for a fix that must not wait for develop's work.
+- Develop: where work is put together, tested and may break. `merge_draft` takes a draft there.
+- Staging: the last check before customers. `merge_draft` with into: "staging" takes a draft straight there; `promote` with to: "staging" brings develop's (or Live's: from: "live"). Tests read staging unless you name the draft (draft: "develop" tests develop). "main" is staging's old name.
+- Live: what customers get. `promote` makes staging Live (from: "develop" skips staging). It may need an admin's approval; then the answer names the request.
 
-`get_journey` shows each level's version. `set_live` only goes back to an earlier version.
+A move changes only its target; nothing moves down on its own. It merges from a version both sides share: a file both changed is refused with both contents, and you pick per file: settled takes the moved side's, keep the target's. Into develop or staging, replace: true makes the target the moved level exactly. `update_draft` with onto follows the level the draft is meant for. `get_journey` shows each level's version, `diff` what one lacks. `set_live` only goes back to an earlier version.
 
-An urgent fix customers need now, only when the user asks for one: `drafts create` from live, fix it there, then `hotfix` (straight to Live, then merged back into staging and develop). When staging or develop did not take it, the answer says which files and how to bring them in. Without hotfix permission it goes to the admins as a request.
+An urgent fix customers need now, only when the user asks for one: `drafts create` from live, fix it there, then `hotfix` (straight to Live; only Live changes). Bring it into staging and develop with `promote` from: "live" when they should have it. Without hotfix permission it goes to the admins as a request.
 
 Several workers: `drafts create` one draft each, work alone, `drafts merge` each back into one draft, then `merge_draft`. `copy_files` is for a few files from another draft or version, never for bringing a worker's draft back.
 
@@ -59,7 +59,7 @@ Making this journey behave like another organization's, whole or in one part, in
 5. `validate` after every batch of edits, and fix what it names. A write's answer already shows what landed and its problems: no `read_file` after it to confirm. After an `edit_steps` move, validate and move again until no file is over 100 steps.
 6. Check once the batch of edits is whole, not after each one, cheapest first: `rerun_block` (the failed step's recorded input on your draft), `step_tests run` (`step_tests add_from_run` keeps a failed step as a case), `send_test_message` (a whole chat on the draft; pass the contactId back to continue), `run_tests` with a scenario file or a suite, then `get_test_report`. Wait for a run with `test_runs get`; never guess its result. Give every paid call (`run_tests`, `send_test_message`, `rerun_block`, `replay_run`, `prepare_reply`, `step_tests run`, `stickers` create) a `requestId` you make up; one that got no answer goes again with the same `requestId`, so nothing runs or is paid twice. A journey test stops at its last step, so a follow up still waiting never runs: to see follow ups, end the scenario with a wait step as long as you want to watch. After a prompt change, run the suite and `test_runs compare` the two runs: what newly fails, what newly passes, each check and the cost. Before replacing or retuning a step that decides (a model, a prompt, several decide steps made one agent), prove it on real conversations: `replay_run` with bulk: since (or runIds) and compare from the old step's output to the new one's, dryRun: true first for the count and the cost; nothing is sent. Before you call a change tested, `test_runs coverage`: the steps no test reached, changed ones first; passing tests say nothing about a step they never ran.
 7. `feedback mark` handled only for what your change fixed and a check confirmed. Tell the user what changed and what is still open.
-8. Develop and staging reach no customer: `merge_draft` into develop when a draft is ready, and `promote` to: "staging" when the owner should test it, without waiting to be asked; say what you moved. Going Live, only when the user asks: `diff`, then `promote` to Live (its dryRun first shows who moves).
+8. Develop and staging reach no customer: `merge_draft` into develop when a draft is ready (into: "staging" for a small fix ready for the owner's last check), and `promote` to: "staging" when develop's work should be checked, without waiting to be asked; say what you moved. Going Live, only when the user asks: `diff`, then `promote` to Live (its dryRun first shows who moves).
 
 Where a fix belongs: how an agent behaves goes in its instructions; facts about the business in knowledge ("files/" or `knowledge add_to_draft`; an upload teaches nothing until then); routing, waiting, timers and sends in a flow; another system in an action or an MCP server. Ways to build the AI (one agent, a router, hand overs, stages and more): `get_schema` with kind guide. A lock that keeps the agents quiet (a field or stage the flow sets: an age check, a block) needs a way out the team can use: start tasks past it with the task trigger, and clear it on a handoff trigger with event handed_back (`get_schema` with kind flow). Otherwise a teammate's task stops at the lock, and its note says not done.
 
@@ -73,7 +73,7 @@ Steps that flows repeat can live in a flow of their own that a call step ({type:
 ## Rules
 
 - Only when the user explicitly asked in this conversation, never on your own, not even after tests pass: `promote` to Live, `hotfix`, `set_live`, `set_bot_answering`, `send_message`, `retry_run`, deletes. These reach real customers or cannot be undone.
-- Keys only through `credentials set`, never in files, prompts or the chat. An action needs one real call, `run_action`, to pin its sample; a method other than GET may change the business's system, so confirm only after the user agreed. MCP servers: `connect_mcp`, then `run_mcp_tool`.
+- Keys only through `credentials set`, never in files, prompts or the chat. A receiver that checks a signature (Make, Zapier, the business's own server): give the action or webhook step `sign: {credential, header}` with that key's name (get_schema action), never compute it in a code step. An action needs one real call, `run_action`, to pin its sample; a method other than GET may change the business's system, so confirm only after the user agreed. MCP servers: `connect_mcp`, then `run_mcp_tool`.
 - Change only what the user or the feedback asked; do not rewrite the business's voice. Never invent a price, an hour or a policy: ask.
 - Tests cost model tokens: run the few that answer the question.
 
