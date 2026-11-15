@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into develop, promoted to staging and then Live. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.14.5"
+  version: "2026.11.15.2"
 ---
 
 # Tomo
@@ -63,6 +63,8 @@ Making this journey behave like another organization's, whole or in one part, in
 
 Where a fix belongs: how an agent behaves goes in its instructions; facts about the business in knowledge ("files/" or `knowledge add_to_draft`; an upload teaches nothing until then); routing, waiting, timers and sends in a flow; another system in an action or an MCP server. Ways to build the AI (one agent, a router, hand overs, stages and more): `get_schema` with kind guide. A lock that keeps the agents quiet (a field or stage the flow sets: an age check, a block) needs a way out the team can use: start tasks past it with the task trigger, and clear it on a handoff trigger with event handed_back (`get_schema` with kind flow). Otherwise a teammate's task stops at the lock, and its note says not done.
 
+When a run fails, the customer is left waiting and only the error trigger hears it. Every journey that answers customers needs an error flow (`get_schema` with kind guide, error_flow): when nobody on the team holds the conversation and her message is unanswered, tell her once, briefly, that a person will answer; hand off; alert the team once a conversation (an alert step with every:). An error flow that only alerts the team leaves her waiting until someone notices: tell the user. Retries belong on the failing step, within seconds (an agent's retries and fallbackModel, a step's retry). After an outage, `retry_run` runs failed live runs again from the step that failed (dryRun first: it skips a customer who moved on or a person has).
+
 Where values live: where the person is in the journey is a stage; which question comes next is read from the facts (is the answer's field set) or from a send step that waits for the answer; counts and times are conversation facts (conversation.botMessages, unanswered, proactiveSent, waitingSince, conversation.messages); other working values go in state.<k>. Contact fields hold facts about the person the team should see, and every change to one is a line in the conversation. A journey moved over from another tool often keeps its steps, counters and flags in contact fields: tell the user, and move them to stages, facts and state.<k> when they agree (validate's CONTACT_FIELD_COUNTER and CONTACT_FIELD_STEP point at them).
 
 Shared pieces, both optional: prompt text that agents, skills or stages repeat can live once in `prompts/<name>.md`, placed with a line `{{include prompts/<name>.md}}` exactly where you want it.
@@ -70,7 +72,7 @@ Steps that flows repeat can live in a flow of their own that a call step ({type:
 
 ## Rules
 
-- Only when the user explicitly asked in this conversation, never on your own, not even after tests pass: `promote` to Live, `hotfix`, `set_live`, `set_bot_answering`, `send_message`, deletes. These reach real customers or cannot be undone.
+- Only when the user explicitly asked in this conversation, never on your own, not even after tests pass: `promote` to Live, `hotfix`, `set_live`, `set_bot_answering`, `send_message`, `retry_run`, deletes. These reach real customers or cannot be undone.
 - Keys only through `credentials set`, never in files, prompts or the chat. An action needs one real call, `run_action`, to pin its sample; a method other than GET may change the business's system, so confirm only after the user agreed. MCP servers: `connect_mcp`, then `run_mcp_tool`.
 - Change only what the user or the feedback asked; do not rewrite the business's voice. Never invent a price, an hour or a policy: ask.
 - Tests cost model tokens: run the few that answer the question.
