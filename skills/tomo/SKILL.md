@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into develop or staging, and promoted to Live. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.19.1"
+  version: "2026.11.20.2"
 ---
 
 # Tomo
@@ -10,6 +10,36 @@ metadata:
 Tomo runs a business's WhatsApp and Instagram customer journey. You work for the builder: the person who builds and keeps that journey for a business. The team reviews real and test conversations in the Tomo app and flags lines that were wrong; you turn that into file edits, check them, and hand the result back. Answer in the user's language; Hebrew in the files is normal.
 
 The tools explain their own fields, and a wrong call answers with what it needs. This file is the way of working.
+
+## Tomo step first
+
+Tomo step first. A code step is a closed box on the builder's journey screen: they cannot read what it does, test it like their other steps or change it themselves, and its mistakes surface only as a failed run. Each need in this table has a step; use it.
+
+- choose a way by a value (a field, a tap, a count, a time, opening hours): condition (equals, contains, matches, gt, exists, empty; all/any; cases; on: hours.open)
+- choose a way by what the customer means: decide (a decisions model, its answers each with next), or a message trigger's meaning filter
+- save, clear or count a value: memory (state.<k> for the run, contact.<k> for the person; null clears; { add: 1 } counts)
+- pull a fact out of what the customer wrote: an agent with output fields, or save_contact with contactFields
+- dates, numbers and words in a message: placeholders with helpers: since, within, add, format, plus, minus, length, default; {{conversation.messages | turn | last: 5 | from: customer | tapped | text}}
+- send text, buttons, a list, a file, a template, and wait for the answer: operation send (buttons, list, cards, form, location; next, other, noReply) and send_template
+- label, assign, team, status, stage, note, handoff, pause, block, hand to an agent: the operation of that name (label, assign, team, status, set_stage, note, handoff, pause_bot, block, add_agent, distribute)
+- call an outside system and read its answer: action step (actions/<name>.md, run_action pins its sample; retry; sign for a signature)
+- tell an outside system something happened: operation webhook (POST, Idempotency-Key, sign, retry)
+- answer the caller of a webhook trigger: respond
+- wait, follow up later, wait for a person to approve: operation wait, start_timer with a timer trigger, approval
+- repeat for every item of a list: for_each ({{item}} inside)
+- the same steps from several places: a called flow (kind: called) and a call step
+- run things side by side: parallel
+- check an answer before it goes out: guardrail
+
+A code step is only for:
+
+- math past plus and minus: multiply, divide, a percent, rounding, a sum or average over a list
+- reshaping a list no path reads as it is: filter, sort, group, remove duplicates or join the items of an outside answer
+- text work no helper does: cut, replace, split, change case, or pull a value out with a pattern
+- outside calls with logic between them in one step: paging until done, or a token or signature an action's sign cannot make
+- reading an outside system from a run with no conversation (a schedule, or a webhook naming no person), where an action step cannot run
+
+Before writing one, tell the user which of these it is. A need on neither list: tell the user Tomo has no step for it.
 
 ## Connect
 
@@ -58,12 +88,12 @@ Making this journey behave like another organization's, whole or in one part, in
 4. Edit small, one path per kind of change. Learn a flow with `outline` (every step on a line, with its Live runs) and `read_file` with step=<id>; never read a whole flow file to learn it. Steps that never run (`outline` with unused: true): tell the user, remove them only when asked. A flow's steps change only with `edit_steps` (set, add, remove, connect, disconnect, rename, move; about 25 operations a call): a text edit of a step is refused with the operations to send instead. A flow's triggers, "flows/index.yaml", "journey.yaml" and other files: `edit_file` (old text matching once; a line the user quoted works as given), `edit_files` for several at once, `write_file` only for a new file. The same name, price or link in many files, flows included: `replace_all`, dryRun first. Ids and field keys: `references` shows every use, `rename_field` renames a field (definitions, forms, campaigns, dashboards and stored data keep the old key; the answer names them), `edit_steps` rename a step. Reword many files the same way (a tone, a gender, a language): `rewrite_files` with an instruction, `dryRun` first, then apply: <its job id>; it is paid. No key or balance: `rewrite_files` with plan: true (free) gives each file's texts and checks; rewrite them yourself (subagents may take files each) and save them as it says (flows with `edit_steps` set, other files with `edit_files`). A write is refused only when a file it touches changed since your hash, naming those files: read them again and redo it. A bad batch: `drafts saves`, then `drafts restore` to the hash before it. A draft write that got no answer: send the same call again with the same hash (it answers already saved when the first landed). Any other call that got no answer may still have landed: look (`drafts saves`, `test_runs list`) before sending it again. Many of one thing is one call: `test_runs archive` takes sessionIds or the list's filters, `contact_fields` set takes contacts, each with its own values (thousands: `contacts import`). A prompt that may contradict itself: `prompt_check` (paid) names the clashing lines.
 5. `validate` after every batch of edits, and fix what it names. A write's answer already shows what landed and its problems: no `read_file` after it to confirm. After an `edit_steps` move, validate and move again until no file is over 100 steps.
 6. Test once the batch of edits is whole, the way customers will meet it:
-   - What must hold in every conversation (one answer per turn, never ask a filled field again, an offer once, a human pace) goes in "rules.yaml" once (`get_schema` kind rules), not in each scenario: every test of the version checks it, and `rules results` names the line and the step that broke it.
-   - A rule that broke with a real customer (`rules breaches`) becomes a test that must stay fixed: `test_cases from_breach` makes the case with that rule as its pass rule; add it to a suite.
+   - Criteria that grade every conversation (one answer per turn, never ask a filled field again, an offer once, a human pace) go in "evals.yaml" once, under `criteria:` (`get_schema` kind evals), not in each scenario: every test of the version is graded on them, and `evals results` names the line and the step that failed one. Criteria grade a conversation after it ends. The agent never reads them. A failed one fails a test and never changes a conversation. To make the agent follow something, put it in its instructions or a guard.
+   - A criterion that failed with a real customer (`evals breaches`) becomes a test that must stay fixed: `test_cases from_breach` makes the case with that criterion as its pass criterion; add it to a suite.
    - Scenarios do what real customers do: a second message while the journey still answers (a line's during, or gapSeconds in real seconds), photos, corrections, coming back after days (a wait step skips the test clock ahead). `get_schema` kind guide, method testing, has an example. A test from a real conversation starts from the state as it was: `starting_points` save or `test_cases from_run` on that message.
    - Cheapest check first: `rerun_block` (the failed step's recorded input on your draft), `step_tests run` (`step_tests add_from_run` keeps a failed step as a case), `send_test_message` (a whole chat on the draft; pass the contactId back to continue), `run_tests` with a scenario file or a suite, then `get_test_report`. Wait for a run with `test_runs get`; never guess its result. Give every paid call (`run_tests`, `send_test_message`, `rerun_block`, `replay_run`, `prepare_reply`, `step_tests run`, `stickers` create) a `requestId` you make up; one that got no answer goes again with the same `requestId`, so nothing runs or is paid twice. A journey test stops at its last step: to see follow ups, end the scenario with a wait step as long as you want to watch. When `run_tests` on a draft says changed steps' step tests did not pass, run that `step_tests run` first (cents, a round costs dollars); `set_run_settings` preRunStepTests warn or block only when the user wants it said every time or held. After a failed round, `get_test_report` gives each failed check's step and its `step_tests add_from_run` call: offer it, never add cases unasked.
    - Judges and characters on another model family than the agents (judgeModel, characterModel): a judge grades its own family kindly. After a prompt change, run the suite and `test_runs compare` the two runs. Before replacing a step that decides, prove it on real conversations: `replay_run` with bulk: since, dryRun: true first; nothing is sent.
-   - Before `merge_draft` and `promote`: `run_tests` with the suite on that exact content, then read the advice lines their answers print (no test on this version, failing or must pass scenarios, rules broken, changed steps and paths no test reached, a judge on the agents' family); each line names its tool. `test_runs realism` shows what real customers do that no test does, `test_runs coverage` the steps and paths no test reached.
+   - Before `merge_draft` and `promote`: `run_tests` with the suite on that exact content, then read the advice lines their answers print (no test on this version, failing or must pass scenarios, criteria failed, changed steps and paths no test reached, a judge on the agents' family); each line names its tool. `test_runs realism` shows what real customers do that no test does, `test_runs coverage` the steps and paths no test reached.
    - Gates are the user's choice, off until set: when they want to be told or held before a merge or Live, `set_run_settings` mergeTestGate or liveTestGate with a suite (warn tells, block holds; mustPass in "tests/suites.yaml" for scenarios that must never fail, compare: base for the noise). The advice lines show either way; testAdvice: off silences them.
 7. `feedback mark` handled only for what your change fixed and a check confirmed. Tell the user what changed and what is still open.
 8. Develop and staging reach no customer: `merge_draft` into develop when a draft is ready (into: "staging" for a small fix ready for the owner's last check), and `promote` to: "staging" when develop's work should be checked, without waiting to be asked; say what you moved. Going Live, only when the user asks: `diff`, then `promote` to Live (its dryRun first shows who moves).
