@@ -2,7 +2,7 @@
 name: tomo
 description: Build, test and fix a business's WhatsApp and Instagram customer journey on Tomo through its builder MCP server. A journey is a folder of files (stages, flows, agents, actions, knowledge, test scenarios) edited in drafts, merged into develop or preview, and promoted to Live. Use when the user mentions Tomo, a client's bot or journey, stages, agents, flows, test runs, team feedback on conversations, WhatsApp templates or going live, or when the tomo MCP server's tools (status, get_journey) are available.
 metadata:
-  version: "2026.11.24.2"
+  version: "2026.11.25.1"
 ---
 
 # Tomo
@@ -111,6 +111,7 @@ Steps that flows repeat can live in a flow of their own that a call step ({type:
 
 - Only when the user explicitly asked in this conversation, never on your own, not even after tests pass: `promote` to Live, `hotfix`, `set_live`, `set_bot_answering`, `send_message`, `retry_run`, deletes. These reach real customers or cannot be undone.
 - Keys only through `credentials set`, never in files, prompts or the chat. A receiver that checks a signature (Make, Zapier, the business's own server): give the action or webhook step `sign: {credential, header}` with that key's name (get_schema action), never compute it in a code step. An action needs one real call, `run_action`, to pin its sample; a method other than GET may change the business's system, so confirm only after the user agreed. MCP servers: `connect_mcp`, then `run_mcp_tool`.
+- A `uid:` line (steps, flows, triggers, stages, actions, migrations, criteria, suites) is Tomo's: never write or change it; rename the name freely.
 - Change only what the user or the feedback asked; do not rewrite the business's voice. Never invent a price, an hour or a policy: ask.
 - Tests cost the builder money (the agents' calls, the character, each judge check): run the targeted ones that answer the question, and the suite before a merge or promote.
 
